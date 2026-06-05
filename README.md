@@ -215,6 +215,8 @@ flowchart LR
 * **Caching & User Preferences:** Integrated a local DB and Cache (Redis) within the notification service to quickly check user preferences (e.g., user opted out of SMS) and fetch message templates without querying external services.
 * **Database Sharding:** Since notification logs grow rapidly, the database is horizontally sharded based on `userId` to maintain fast read/write speeds.
 * **Notification Logs:** Added a tracking database to log the state of every message (Sent, Failed, Retrying) for analytics and customer support debugging.
+* * **Resilience & Circuit Breaking:** Integrated a Circuit Breaker pattern on the distributed worker nodes to prevent thundering herd problems. If a 3rd-party vendor (e.g., Twilio) undergoes a prolonged outage, the circuit trips to fail fast, shielding the core message queues from resource exhaustion.
+* **Containerized Deployment:** Packaged the notification servers and independent worker nodes into lightweight Docker containers, enabling predictable environments and rapid horizontal scaling during peak 580 QPS traffic surges.
 
 ## Phase 4: Operational Hardening
 After scaling the system for production, the final step is to make it more reliable, secure, and globally resilient.
@@ -269,7 +271,7 @@ flowchart LR
 
 ### The Enhancements (Why this matters at scale):
 
-* **Monitoring & Alerting:** Tools like Prometheus/Grafana or AWS CloudWatch track system health (queue lag, worker failures, API errors). Alerts are raised when thresholds are crossed, so issues are caught early before they affect users.
+* **Observability & SRE Metrics:** Deployed Prometheus and Grafana to track production health using the RED method (Request Rate, Error Rates across 3rd-party APIs, and Loop Duration). Configured real-time alerts on Kafka consumer queue lag to automatically detect bottlenecks before they impact delivery timelines.
 
 * **Security of Secrets:** API keys for Twilio, SendGrid, etc. are stored in Vault/KMS instead of code. Workers fetch them securely at runtime, preventing leaks and protecting against misuse.
 
